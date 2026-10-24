@@ -213,13 +213,23 @@ int main()
             break;
 
         case 3:
-
             if (c_blurred->width)
             {
                 printf("Already implemented.\n");
                 break;
             }
-            n_blurring(c_blurred, main_image);
+            {
+                img *tmp = (img *)calloc(1, sizeof(img));
+                c_blurring(c_blurred, main_image);
+                for (int i = 0; i < 9; i++)
+                {
+                    c_blurring(tmp, c_blurred);
+                    free(c_blurred->pixels);
+                    c_blurred->pixels = tmp->pixels;
+                    tmp->pixels = nullptr;
+                }
+                free(tmp);
+            }
             stbi_write_png("output/c_blurred_img.png", width, height, 3, c_blurred->pixels, width * 3);
             if (c_blurred)
                 printf("Circular Blurred image saved as c_blurred_img.png\n");
