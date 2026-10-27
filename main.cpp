@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <cstdio>
 
-
 /*=========================== Helpers =========================================*/
 
 void free_img(img *p)
@@ -16,7 +15,6 @@ void free_img(img *p)
     free(p->pixels);
     free(p);
 }
-
 
 /*=========================== Color Inversion =========================================*/
 
@@ -37,20 +35,18 @@ void c_inversion(img *inverted, img *main_image)
     }
 }
 
-
-
 /*=========================== Gaussian Blur =========================================*/
 
 int n_blurred_value(img *m, int i, int j, int k)
 {
     int w = m->width;
     unsigned char *p = m->pixels;
-    
+
     int stride = w * 3;               // bytes in one full row
     int center = 3 * (i * w + j) + k; // index of this pixel, this channel
-    
+
     int sum = 1 * p[center - stride - 3] + 2 * p[center - stride] + 1 * p[center - stride + 3] + 2 * p[center - 3] + 4 * p[center] + 2 * p[center + 3] + 1 * p[center + stride - 3] + 2 * p[center + stride] + 1 * p[center + stride + 3];
-    
+
     return sum / 16;
 }
 
@@ -77,18 +73,16 @@ void n_blurring(img *blurred, img *main_image)
     }
 }
 
-
-
 /*=========================== Circular Blur =========================================*/
 
 int c_blurred_value(img *m, int i, int j, int k)
 {
     int w = m->width;
     unsigned char *p = m->pixels;
-    
+
     int stride = w * 3;               // bytes in one full row
     int center = 3 * (i * w + j) + k; // index of this pixel, this channel
-    
+
     int sum = 1 * p[center - stride - 3] + 1 * p[center - stride] + 1 * p[center - stride + 3] + 1 * p[center - 3] + 0 * p[center] + 1 * p[center + 3] + 1 * p[center + stride - 3] + 1 * p[center + stride] + 1 * p[center + stride + 3];
 
     return sum / 8;
@@ -117,14 +111,34 @@ void c_blurring(img *blurred, img *main_image)
     }
 }
 
+/*===========================================Grayscale===========================================*/
 
+void grayscaling(img *grayscaled, img *main_image)
+{
+    grayscaled->pixels = (unsigned char *)malloc((size_t)(main_image->width) * (main_image->height * 3));
+    if (!grayscaled->pixels)
+    {
+        std::printf("Out of memory\n");
+        return;
+    }
+    grayscaled->channels = main_image->channels;
+    grayscaled->width = main_image->width;
+    grayscaled->height = main_image->height;
+    for (int i = 0; i < main_image->height * main_image->width * main_image->channels; i += 3)
+    {
+        int val = 0.299 * main_image->pixels[i] + 0.587 * main_image->pixels[i + 1] + 0.114 * main_image->pixels[i + 2];
+        grayscaled->pixels[i] = val;
+        grayscaled->pixels[i + 1] = val;
+        grayscaled->pixels[i + 2] = val;
+    }
+}
 
 /*================================================================================================*/
 
 int main()
 {
     int width, height, channels;
-    
+
     // Load test.png as RGB (3 bytes per pixel)
     unsigned char *pixels = stbi_load("test.png", &width, &height, &channels, 3);
     img *main_image = (img *)malloc(sizeof(img));
@@ -158,7 +172,6 @@ int main()
     }
     n_blurred->width = 0;
 
-
     // Declaring of c blurred img
     img *c_blurred = (img *)malloc(sizeof(img));
     if (!c_blurred)
@@ -167,6 +180,15 @@ int main()
         return 1;
     }
     c_blurred->width = 0;
+
+    // Declaring of grayscaled img
+    img *grayscaled = (img *)malloc(sizeof(img));
+    if (!grayscaled)
+    {
+        printf("Failed to allocate memory to grayscaled image.\n");
+        return 1;
+    }
+    grayscaled->width = 0;
 
     bool running = true;
     while (running)
@@ -236,11 +258,22 @@ int main()
             break;
 
         case 4:
+            if (grayscaled->width)
+            {
+                printf("Already implemented.\n");
+                break;
+            }
+            grayscaling(grayscaled, main_image);
+            stbi_write_png("output/grayscale_img.png", width, height, 3, grayscaled->pixels, width * 3);
+            if (grayscaled)
+                printf("Grayscale image saved as grayscale_img.png\n");
+            break;
+
+                case 5:
 
             running = false;
             std::printf("Ending program...\n");
             break;
-
 
         default:
 
